@@ -7,6 +7,8 @@ end
 
 require 'rom-mongo'
 
+Mongo::Logger.logger.level = Logger::WARN
+
 root = Pathname(__FILE__).dirname
 
 Dir[root.join('shared/*.rb').to_s].each { |f| require f }
