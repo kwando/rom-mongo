@@ -1,4 +1,5 @@
 require 'origin'
+require 'rom/mongo/query_dsl'
 
 module ROM
   module Mongo
@@ -8,16 +9,23 @@ module ROM
       end
 
       def initialize(collection, criteria = Criteria.new)
+        raise TypeError.new("exepected a Criteria object but got a #{criteria.class}") unless criteria.kind_of?(Criteria)
         @collection = collection
         @criteria = criteria
       end
 
       attr_reader :collection
-
       attr_reader :criteria
 
-      def find(criteria = {})
-        Dataset.new(collection, Criteria.new.where(criteria))
+      def find(selector = {}, &block)
+        unless block.nil?
+          new_criteria = criteria.instance_exec(&block)
+          raise TypeError.new('return value of the block needs to be a Criteria object') unless criteria.kind_of?(Criteria)
+        else
+          new_criteria = Criteria.new.where(selector)
+        end
+
+        dataset(new_criteria)
       end
 
       def to_a
@@ -33,32 +41,28 @@ module ROM
         collection.insert_one(data)
       end
 
+      def count
+        view.count
+      end
+
+      def empty?
+        count == 0
+      end
+
       def update_all(attributes)
         view.update_many(attributes)
+      end
+
+      def update_one(attributes)
+        view.update_one(attributes)
       end
 
       def remove_all
         view.delete_many
       end
 
-      def where(doc)
-        dataset(criteria.where(doc))
-      end
-
-      def only(fields)
-        dataset(criteria.only(fields))
-      end
-
-      def without(fields)
-        dataset(criteria.without(fields))
-      end
-
-      def limit(limit)
-        dataset(criteria.limit(limit))
-      end
-
-      def skip(value)
-        dataset(criteria.skip(value))
+      def remove_one
+        view.delete_one
       end
 
       private
