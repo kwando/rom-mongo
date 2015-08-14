@@ -6,8 +6,11 @@ module ROM
     class Dataset
       class Criteria
         include Origin::Queryable
+
+        def to_criteria
+          self
+        end
       end
-      include QueryDSL
 
       def initialize(collection, criteria = Criteria.new)
         @collection = collection
@@ -18,8 +21,22 @@ module ROM
 
       attr_reader :criteria
 
-      def find(criteria = {})
-        Dataset.new(collection, Criteria.new.where(criteria))
+      def find(criteria = {}, &block)
+        if block_given?
+          if block.arity == 1
+            criteria = block.call(@criteria)
+          else
+            criteria = @criteria.instance_eval(&block)
+          end
+
+          if !criteria.respond_to?(:to_criteria)
+            raise TypeError.new('expecting block to return an object responding to #to_criteria')
+          end
+          criteria = criteria.to_criteria
+        else
+          criteria = Criteria.new.where(criteria)
+        end
+        Dataset.new(collection, criteria)
       end
 
       def to_a
@@ -41,6 +58,10 @@ module ROM
 
       def remove_all
         view.delete_many
+      end
+
+      def selector
+        criteria.selector
       end
 
       private
@@ -67,3 +88,4 @@ module ROM
     end
   end
 end
+ROM::Mongo::QueryDSL.setup!

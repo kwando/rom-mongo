@@ -1,24 +1,41 @@
 module ROM
   module Mongo
     module QueryDSL
-      def where(doc)
-        dataset(criteria.where(doc))
+      [
+          :where,
+          :only,
+          :without,
+          :limit,
+          :skip,
+          :in,
+          :all,
+          :between,
+          :elem_match,
+          :exists,
+          :gt,
+          :gte,
+          :lt,
+          :lte,
+          :max_distance,
+          :mod,
+          :ne,
+          :near,
+          :nin,
+          :with_size,
+          :within_box,
+          :within_circle,
+          :within_polygon,
+          :within_spherical_circle
+      ].each do |name|
+        define_method(name) do |*args|
+          dataset(criteria.send(name, *args))
+        end
       end
 
-      def only(fields)
-        dataset(criteria.only(fields))
-      end
-
-      def without(fields)
-        dataset(criteria.without(fields))
-      end
-
-      def limit(limit)
-        dataset(criteria.limit(limit))
-      end
-
-      def skip(value)
-        dataset(criteria.skip(value))
+      def self.setup!
+        ROM::Mongo::Relation.forward(*ROM::Mongo::QueryDSL.public_instance_methods(false))
+        ROM::Mongo::Dataset.include(ROM::Mongo::QueryDSL)
+        self
       end
     end
   end
