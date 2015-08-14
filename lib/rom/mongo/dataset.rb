@@ -1,4 +1,5 @@
 require 'origin'
+require 'rom/mongo/query_dsl'
 
 module ROM
   module Mongo
@@ -6,6 +7,7 @@ module ROM
       class Criteria
         include Origin::Queryable
       end
+      include QueryDSL
 
       def initialize(collection, criteria = Criteria.new)
         @collection = collection
@@ -39,26 +41,6 @@ module ROM
 
       def remove_all
         view.delete_many
-      end
-
-      def where(doc)
-        dataset(criteria.where(doc))
-      end
-
-      def only(fields)
-        dataset(criteria.only(fields))
-      end
-
-      def without(fields)
-        dataset(criteria.without(fields))
-      end
-
-      def limit(limit)
-        dataset(criteria.limit(limit))
-      end
-
-      def skip(value)
-        dataset(criteria.skip(value))
       end
 
       private
