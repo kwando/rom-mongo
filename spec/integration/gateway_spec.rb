@@ -3,9 +3,9 @@ require 'spec_helper'
 require 'virtus'
 
 describe 'Mongo gateway' do
-  subject(:rom) { setup.finalize }
+  subject(:rom) { ROM.container(setup) }
 
-  let(:setup) { ROM.setup(:mongo, 'mongodb://127.0.0.1:27017/test') }
+  let(:setup) { ROM::Configuration.new(:mongo, 'mongodb://127.0.0.1:27017/test') }
   let(:gateway) { rom.gateways[:default] }
 
   after do
@@ -13,6 +13,7 @@ describe 'Mongo gateway' do
   end
 
   before do
+    setup.use(:macros)
     setup.relation(:users) do
       def by_name(name)
         find(name: name)
@@ -60,7 +61,7 @@ describe 'Mongo gateway' do
       jane = rom.relation(:users).as(:model).by_name('Jane').one!
 
       expect(jane.id)
-        .to eql(rom.relation(:users) { |r| r.find(name: 'Jane') }.one['_id'].to_s)
+          .to eql(rom.relation(:users) { |r| r.find(name: 'Jane') }.one['_id'].to_s)
       expect(jane.name).to eql('Jane')
       expect(jane.email).to eql('jane@doe.org')
     end
@@ -88,7 +89,7 @@ describe 'Mongo gateway' do
         end
 
         expect(result)
-          .to match_array([{ _id: id, name: 'joe', email: 'joe@doe.org' }])
+            .to match_array([{_id: id, name: 'joe', email: 'joe@doe.org'}])
       end
     end
 
@@ -101,25 +102,25 @@ describe 'Mongo gateway' do
         end
 
         expect(result).to match_array(
-          [{ '_id' => BSON::ObjectId.from_string(jane.id),
-             'name' => 'Jane',
-             'email' => 'jane.doe@test.com' }]
-        )
+                              [{'_id'   => BSON::ObjectId.from_string(jane.id),
+                                'name'  => 'Jane',
+                                'email' => 'jane.doe@test.com'}]
+                          )
       end
     end
 
     describe 'delete' do
       it 'deletes documents from the collection' do
         jane = rom.relation(:users).as(:model).by_name('Jane').one!
-        joe = rom.relation(:users).as(:model).by_name('Joe').one!
+        joe  = rom.relation(:users).as(:model).by_name('Joe').one!
 
         result = commands.try { commands.delete.by_name('Joe') }
 
         expect(result).to match_array(
-          [{ '_id' => BSON::ObjectId.from_string(joe.id),
-             'name' => 'Joe',
-             'email' => 'joe@doe.org' }]
-        )
+                              [{'_id'   => BSON::ObjectId.from_string(joe.id),
+                                'name'  => 'Joe',
+                                'email' => 'joe@doe.org'}]
+                          )
 
         expect(rom.relation(:users).as(:model).all).to match_array([jane])
       end
