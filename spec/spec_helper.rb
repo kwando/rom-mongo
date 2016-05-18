@@ -11,6 +11,12 @@ root = Pathname(__FILE__).dirname
 
 Dir[root.join('shared/*.rb').to_s].each { |f| require f }
 
+require 'dry-types'
+Dry::Types.register('bson.object_id', Dry::Types::Definition.new(BSON::ObjectId).constructor { |bson_id|
+  raise TypeError.new("expected a BSON::ObjectId") unless bson_id.kind_of?(BSON::ObjectId)
+  bson_id
+})
+
 RSpec.configure do |config|
   config.before do
     @constants = Object.constants

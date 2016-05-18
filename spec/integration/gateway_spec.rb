@@ -1,16 +1,10 @@
 require 'spec_helper'
 
 require 'virtus'
+require 'dry-types'
 
 describe 'Mongo gateway' do
-  subject(:rom) { ROM.container(setup) }
-
-  let(:setup) { ROM::Configuration.new(:mongo, 'mongodb://127.0.0.1:27017/test') }
-  let(:gateway) { rom.gateways[:default] }
-
-  after do
-    gateway.connection.database.drop
-  end
+  include_context('database setup')
 
   before do
     setup.use(:macros)
@@ -25,19 +19,20 @@ describe 'Mongo gateway' do
     end
 
     setup.commands(:users) do
-      define(:create)
+      define(:create) {
+        input(Dry::Types['hash'].strict(
+            name:  'strict.string',
+            email: 'strict.string'
+        ))
+      }
       define(:update)
       define(:delete)
     end
 
-    user_model = Class.new do
-      include Virtus.value_object
-
-      values do
-        attribute :id, String
-        attribute :name, String
-        attribute :email, String
-      end
+    user_model = Class.new(Dry::Types::Struct) do
+      attribute :id, 'coercible.string'
+      attribute :name, 'strict.string'
+      attribute :email, 'strict.string'
     end
 
     setup.mappers do
@@ -52,13 +47,14 @@ describe 'Mongo gateway' do
       end
     end
 
-    rom.relations.users.insert(name: 'Jane', email: 'jane@doe.org')
-    rom.relations.users.insert(name: 'Joe', email: 'joe@doe.org')
+    users.insert(name: 'Jane', email: 'jane@doe.org')
+    users.insert(name: 'Joe', email: 'joe@doe.org')
   end
+
 
   describe 'env#relation' do
     it 'returns mapped object' do
-      jane = rom.relation(:users).as(:model).by_name('Jane').one!
+      jane = users.as(:model).by_name('Jane').one!
 
       expect(jane.id)
           .to eql(rom.relation(:users) { |r| r.find(name: 'Jane') }.one['_id'].to_s)
