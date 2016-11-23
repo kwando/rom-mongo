@@ -2,12 +2,12 @@ require 'spec_helper'
 
 require 'virtus'
 require 'dry-types'
+require 'dry-struct'
 
 describe 'Mongo gateway' do
   include_context('database setup')
 
   before do
-    setup.use(:macros)
     setup.relation(:users) do
       def by_name(name)
         find(name: name)
@@ -20,7 +20,7 @@ describe 'Mongo gateway' do
 
     setup.commands(:users) do
       define(:create) {
-        input(Dry::Types['hash'].strict(
+        input(Dry::Types['hash'].permissive(
             name:  'strict.string',
             email: 'strict.string'
         ))
@@ -29,7 +29,7 @@ describe 'Mongo gateway' do
       define(:delete)
     end
 
-    user_model = Class.new(Dry::Types::Struct) do
+    user_model = Class.new(Dry::Struct) do
       attribute :id, 'coercible.string'
       attribute :name, 'strict.string'
       attribute :email, 'strict.string'

@@ -14,7 +14,7 @@ module ROM
 
       def initialize(collection, criteria = Criteria.new)
         @collection = collection
-        @criteria = criteria
+        @criteria   = criteria
       end
 
       attr_reader :collection
@@ -52,16 +52,20 @@ module ROM
         collection.insert_one(data)
       end
 
-      def update_all(attributes)
+      def update(attributes)
         view.update_many(attributes)
       end
 
-      def remove_all
+      def delete
         view.delete_many
       end
 
       def selector
         criteria.selector
+      end
+
+      def count
+        view.count
       end
 
       private
@@ -81,7 +85,7 @@ module ROM
         map = {fields: :projection}
         options.each do |option, value|
           option = map.fetch(option, option)
-          view = view.send(option, value) if view.respond_to?(option)
+          view   = view.send(option, value) if view.respond_to?(option)
         end
         view
       end

@@ -21,8 +21,8 @@ module ROM
           relation.dataset
         end
 
-        def execute(attributes)
-          collection.update_all('$set' => input[attributes])
+        def execute(document)
+          collection.update('$set' => input[document])
           collection.to_a
         end
       end
@@ -30,7 +30,7 @@ module ROM
       class Delete < ROM::Commands::Delete
         def execute
           removed = relation.to_a
-          relation.dataset.remove_all
+          relation.dataset.delete
           removed
         end
       end

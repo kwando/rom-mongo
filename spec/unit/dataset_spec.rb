@@ -22,6 +22,13 @@ describe ROM::Mongo::Dataset do
     end
   end
 
+  describe 'where' do
+    it 'is chainable' do
+      relation = users.where(username: /Hannes Nevalainen/).in(tags: 'hello')
+      expect(relation.criteria).to be_a(ROM::Mongo::Dataset::Criteria)
+    end
+  end
+
 
   describe 'dataset query DSL chaining' do
     it 'support chaining DSL methods' do
