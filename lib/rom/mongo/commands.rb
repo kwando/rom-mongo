@@ -13,7 +13,7 @@ module ROM
         end
 
         def execute(document)
-          collection.insert(document)
+          collection.insert(input[document])
           [document]
         end
       end
@@ -26,7 +26,7 @@ module ROM
         end
 
         def execute(attributes)
-          collection.update_all('$set' => attributes)
+          collection.update_all('$set' => input[attributes])
           collection.to_a
         end
       end
